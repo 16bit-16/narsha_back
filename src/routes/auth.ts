@@ -211,10 +211,14 @@ router.post("/login", limiter, async (req, res) => {
       email: user.email,
     });
 
+    // ✅ 쿠키 방식 유지 (옵션)
     setAuthCookie(res, token);
+    
+    // ✅ 토큰을 응답에 포함 (localStorage용)
     return res.json({
       ok: true,
       user: { id: String(user._id), userId: user.userId, email: user.email },
+      token, // ✅ 추가
     });
   } catch (e: any) {
     console.error("login error:", e);

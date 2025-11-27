@@ -16,7 +16,7 @@ import uploadRouter from "./routes/upload";
 const app = express();
 
 // CORS 설정 — 프리플라이트(OPTIONS) 완전 허용
-const allowedOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const allowedOrigins = ["https://palpalshop.shop", "http://local.palpalshop.shop:5173"];
 app.use((req, res, next) => {
   const origin = req.headers.origin as string | undefined;
   if (!origin || allowedOrigins.includes(origin)) {
