@@ -22,7 +22,7 @@ export function setAuthCookie(res: ExResponse, token: string) {
   res.cookie(cookieName, token, {
     httpOnly: true, // ✅ 항상 true
     sameSite: "none",
-    secure: true, // ✅ 항상 true
+    secure: false, // ✅ 항상 true
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   });
@@ -32,7 +32,7 @@ export function clearAuthCookie(res: ExResponse) {
   res.cookie(cookieName, "", {
     httpOnly: true, // ✅ 항상 true
     sameSite: "none",
-    secure: true, // ✅ 항상 true
+    secure: false, // ✅ 항상 true
     expires: new Date(0),
     path: "/",
   });
