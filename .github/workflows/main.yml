@@ -21,6 +21,6 @@ jobs:
             git pull origin main
             npm install
             npm run build
-            pm2 restart all || pm2 start dist/index.js --name "narsha-server"
+            pm2 restart all || pm2 start dist/app.js --name "narsha-server"
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
