@@ -241,4 +241,126 @@ router.post("/logout", (_req, res) => {
   return res.json({ ok: true });
 });
 
+// 아이디 찾기
+router.post("/find/id", limiter, async (req, res) => {
+  try {
+    const { email, code } = z.object({
+      email: z.string().email(),
+      code: z.string().min(4).max(8),
+    }).parse(req.body);
+
+    // 인증코드 확인
+    const codeDoc = await EmailCode.findOne({ email });
+    if (!codeDoc || codeDoc.code !== code) {
+      return res.status(400).json({ ok: false, error: "인증코드가 일치하지 않습니다" });
+    }
+
+    // 이메일로 사용자 찾기
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ ok: false, error: "사용자를 찾을 수 없습니다" });
+    }
+
+    await EmailCode.deleteOne({ email });
+
+    return res.json({ ok: true, userId: user.userId });
+  } catch (err: any) {
+    return res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// 비밀번호 재설정 코드 발송
+router.post("/send-reset-code", limiter, async (req, res) => {
+  try {
+    const { userId, email } = z.object({
+      userId: z.string().min(1),
+      email: z.string().email(),
+    }).parse(req.body);
+
+    // 사용자 확인
+    const user = await User.findOne({ userId, email });
+    if (!user) {
+      return res.status(404).json({ ok: false, error: "일치하는 사용자가 없습니다" });
+    }
+
+    // 코드 생성 & 발송
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await EmailCode.findOneAndUpdate(
+      { email },
+      { code, expiresAt, attempts: 0 },
+      { upsert: true, new: true }
+    );
+
+    await transporter.sendMail({
+      from: process.env.MAIL_FROM ?? requireEnv("SMTP_USER"),
+      to: email,
+      subject: "비밀번호 재설정 인증코드",
+      text: `인증코드: ${code} (10분 이내 유효)`,
+      html: `<p>인증코드: <b style="font-size:18px;">${code}</b></p>`,
+    });
+
+    return res.json({ ok: true });
+  } catch (err: any) {
+    return res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// 비밀번호 재설정 코드 확인
+router.post("/verify-reset-code", limiter, async (req, res) => {
+  try {
+    const { userId, email, code } = z.object({
+      userId: z.string().min(1),
+      email: z.string().email(),
+      code: z.string().min(4).max(8),
+    }).parse(req.body);
+
+    const codeDoc = await EmailCode.findOne({ email });
+    if (!codeDoc || codeDoc.code !== code) {
+      return res.status(400).json({ ok: false, error: "인증코드가 일치하지 않습니다" });
+    }
+
+    return res.json({ ok: true });
+  } catch (err: any) {
+    return res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+// 비밀번호 재설정
+router.post("/reset-password", limiter, async (req, res) => {
+  try {
+    const { userId, email, code, newPassword } = z.object({
+      userId: z.string().min(1),
+      email: z.string().email(),
+      code: z.string().min(4).max(8),
+      newPassword: z.string().min(4),
+    }).parse(req.body);
+
+    // 코드 재확인
+    const codeDoc = await EmailCode.findOne({ email });
+    if (!codeDoc || codeDoc.code !== code) {
+      return res.status(400).json({ ok: false, error: "인증코드가 일치하지 않습니다" });
+    }
+
+    // 사용자 찾기
+    const user = await User.findOne({ userId, email });
+    if (!user) {
+      return res.status(404).json({ ok: false, error: "사용자를 찾을 수 없습니다" });
+    }
+
+    // 비밀번호 변경
+    const hash = await bcrypt.hash(newPassword, 10);
+    user.passwordHash = hash;
+    await user.save();
+
+    // 코드 삭제
+    await EmailCode.deleteOne({ email });
+
+    return res.json({ ok: true });
+  } catch (err: any) {
+    return res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
 export default router;
