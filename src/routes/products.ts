@@ -143,4 +143,32 @@ router.post("/:id/like", async (req, res) => {
   }
 });
 
+// 내가 올린 상품
+router.get("/my", async (req, res) => {
+  const user = readUserFromReq(req);
+  if (!user) {
+    return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
+
+  const products = await Product.find({ seller: user.id })
+    .sort({ createdAt: -1 })
+    .limit(100);
+
+  return res.json({ ok: true, products });
+});
+
+// 찜한 상품
+router.get("/liked", async (req, res) => {
+  const user = readUserFromReq(req);
+  if (!user) {
+    return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
+
+  const products = await Product.find({ likes: user.id })
+    .sort({ createdAt: -1 })
+    .limit(100);
+
+  return res.json({ ok: true, products });
+});
+
 export default router;
