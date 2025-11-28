@@ -80,9 +80,9 @@ router.post("/send-code", limiter, async (req, res) => {
   try {
     const { email } = sendSchema.parse(req.body);
 
-    // 6자리 코드 생성 & 만료 10분
+    // 6자리 코드 생성 & 만료 3분
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
 
     await EmailCode.findOneAndUpdate(
       { email },
@@ -93,9 +93,9 @@ router.post("/send-code", limiter, async (req, res) => {
     const info = await transporter.sendMail({
       from: process.env.MAIL_FROM ?? requireEnv("SMTP_USER"),
       to: email,
-      subject: "KRUSH 이메일 인증코드",
-      text: `인증코드: ${code} (10분 이내 유효)`,
-      html: `<p>인증코드: <b style="font-size:18px;">${code}</b></p><p>10분 이내에 입력해 주세요.</p>`,
+      subject: "PALPAL 이메일 인증코드",
+      text: `인증코드: ${code} (3분 이내 유효)`,
+      html: `<p>인증코드: <b style="font-size:18px;">${code}</b></p><p>3분 이내에 입력해 주세요.</p>`,
     });
 
     return res.json({ ok: true, messageId: info.messageId });
@@ -296,9 +296,9 @@ router.post("/send-reset-code", limiter, async (req, res) => {
     await transporter.sendMail({
       from: process.env.MAIL_FROM ?? requireEnv("SMTP_USER"),
       to: email,
-      subject: "비밀번호 재설정 인증코드",
-      text: `인증코드: ${code} (10분 이내 유효)`,
-      html: `<p>인증코드: <b style="font-size:18px;">${code}</b></p>`,
+      subject: "PALPAL 비밀번호 재설정 인증코드",
+      text: `인증코드: ${code} (3분 이내 유효)`,
+      html: `<p>인증코드: <b style="font-size:18px;">${code}</b></p><p>3분 이내에 입력해 주세요.</p>`,
     });
 
     return res.json({ ok: true });
