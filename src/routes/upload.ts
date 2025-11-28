@@ -17,9 +17,7 @@ const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const base = path
-      .basename(file.originalname, ext)
-      .replace(/[^a-zA-Z0-9_-]/g, "");
+    const base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, "");
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, `${base || "image"}-${unique}${ext}`);
   },
@@ -74,7 +72,7 @@ router.post(
 
     try {
       const base = getBaseUrl(req);
-      
+
       const urls = await Promise.all(
         files.map(async (f) => {
           // ✅ .webp 확장자로 변경
@@ -84,14 +82,13 @@ router.post(
 
           // ✅ WebP로 변환 (JPEG보다 30-50% 작음)
           await sharp(f.path)
-            .resize(1200, 1200, { 
-              fit: "inside", 
-              withoutEnlargement: true 
-            })
-            .webp({ quality: 85 }) // ✅ webp로 변경
+            .resize(1200, 1200, { fit: "inside" })
+            .webp({ quality: 85 })
             .toFile(outputPath);
 
           // 원본 파일 삭제
+          fs.chmodSync(outputPath, 0o644);
+
           fs.unlinkSync(f.path);
 
           return `${base}/uploads/${outputFilename}`;
@@ -101,7 +98,7 @@ router.post(
       return res.status(201).json({ ok: true, urls });
     } catch (err: any) {
       console.error("Image optimization error:", err);
-      
+
       const base = getBaseUrl(req);
       const urls = files.map((f) => `${base}/uploads/${path.basename(f.path)}`);
       return res.status(201).json({ ok: true, urls });
