@@ -63,6 +63,7 @@ router.post("/", async (req, res) => {
     buydate: z.string().optional().default(""),
     trade: z.string().optional().default(""), 
     deliveryfee: z.string().optional().default("배송비 미포함"),
+    isSailed: z.boolean().optional().default(false),
   });
 
   const parsed = Body.safeParse(req.body);
