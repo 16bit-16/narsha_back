@@ -75,6 +75,56 @@ router.post("/", async (req, res) => {
   return res.status(201).json({ ok: true, product: doc });
 });
 
+// server/routes/products.ts
+
+// 상품 상태 변경
+router.patch("/:id/status", async (req, res) => {
+  const user = readUserFromReq(req);
+  if (!user) {
+    return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
+
+  const { status } = z.object({
+    status: z.enum(["selling", "reserved", "sold"]),
+  }).parse(req.body);
+
+  const product = await Product.findById(req.params.id);
+  if (!product) {
+    return res.status(404).json({ ok: false, error: "상품을 찾을 수 없습니다" });
+  }
+
+  // 본인 상품인지 확인
+  if (product.seller.toString() !== user.id) {
+    return res.status(403).json({ ok: false, error: "권한이 없습니다" });
+  }
+
+  product.status = status;
+  await product.save();
+
+  return res.json({ ok: true, product });
+});
+
+// 상품 삭제
+router.delete("/:id", async (req, res) => {
+  const user = readUserFromReq(req);
+  if (!user) {
+    return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
+
+  const product = await Product.findById(req.params.id);
+  if (!product) {
+    return res.status(404).json({ ok: false, error: "상품을 찾을 수 없습니다" });
+  }
+
+  if (product.seller.toString() !== user.id) {
+    return res.status(403).json({ ok: false, error: "권한이 없습니다" });
+  }
+
+  await product.deleteOne();
+
+  return res.json({ ok: true });
+});
+
 // 내가 올린 상품
 router.get("/my", async (req, res) => {
   const user = readUserFromReq(req);
