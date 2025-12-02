@@ -21,6 +21,7 @@ router.get("/search", async (req, res) => {
         { description: { $regex: query.trim(), $options: "i" } },
       ],
     })
+      .populate("seller", "userId nickname profileImage rating")
       .sort({ createdAt: -1 })
       .limit(100);
 
@@ -164,23 +165,24 @@ router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
       .populate("seller", "userId nickname profileImage rating");
+
     if (!product) {
       return res.status(404).json({ ok: false, error: "not_found" });
     }
 
     // ✅ 현재 유저의 좋아요 여부 확인
     const user = readUserFromReq(req);
-    const isLiked = user && product.likes 
-      ? product.likes.some((likeId) => likeId.toString() === user.id)
+    const isLiked = user && product.likes
+      ? product.likes.some((id) => id.toString() === user.id)
       : false;
 
-    return res.json({ 
-      ok: true, 
+    return res.json({
+      ok: true,
       product,
-      isLiked, // ✅ 좋아요 여부 추가
+      isLiked,
     });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: "조회 실패" });
+  } catch (err: any) {
+    return res.status(500).json({ ok: false, error: err.message });
   }
 });
 
@@ -213,14 +215,13 @@ router.post("/:id/like", async (req, res) => {
     product.likeCount = product.likes.length;
     await product.save();
 
-    res.json({
+    return res.json({
       ok: true,
-      product,
       isLiked: likedIndex === -1,
       likeCount: product.likeCount,
     });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: "서버 오류" });
+  } catch (err: any) {
+    return res.status(500).json({ ok: false, error: err.message });
   }
 });
 
