@@ -28,7 +28,6 @@ const ProductSchema = new Schema(
     buydate: { type: String, default: null },
     trade: { type: String, default: null },    
     deliveryfee: { type: String, default: "배송비 미포함" },
-    isSailed: { type: Boolean, default: false },
     likes: [{ type: Types.ObjectId, ref: "User" }], // 좋아요한 유저 ID 배열
     likeCount: { type: Number, default: 0 }, // 좋아요 수 (성능 최적화용)
   },

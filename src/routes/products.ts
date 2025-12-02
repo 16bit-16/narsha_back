@@ -162,7 +162,8 @@ router.get("/", async (_req, res) => {
 /** 단건 조회 - 좋아요 정보 포함 ✅ */
 router.get("/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id)
+      .populate("seller", "userId nickname profileImage rating");
     if (!product) {
       return res.status(404).json({ ok: false, error: "not_found" });
     }
@@ -214,6 +215,7 @@ router.post("/:id/like", async (req, res) => {
 
     res.json({
       ok: true,
+      product,
       isLiked: likedIndex === -1,
       likeCount: product.likeCount,
     });
