@@ -5,7 +5,9 @@ import { readUserFromReq } from "../utils/authToken";
 
 const router = Router();
 
-// 검색
+// ✅ 구체적인 라우트가 먼저 와야 함!
+
+/** 검색 */
 router.get("/search", async (req, res) => {
   try {
     const query = req.query.q as string;
@@ -14,7 +16,6 @@ router.get("/search", async (req, res) => {
       return res.json({ ok: true, products: [] });
     }
 
-    // 제목 또는 설명에서 검색 (대소문자 구분 없이)
     const products = await Product.find({
       $or: [
         { title: { $regex: query.trim(), $options: "i" } },
@@ -35,10 +36,52 @@ router.get("/search", async (req, res) => {
   }
 });
 
-/** 등록 */
+/** 내가 올린 상품 */
+router.get("/my", async (req, res) => {
+  const user = readUserFromReq(req);
+  if (!user) {
+    return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
+
+  try {
+    const products = await Product.find({ seller: user.id })
+      .populate("seller", "userId nickname profileImage rating")
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    return res.json({ ok: true, products });
+  } catch (err: any) {
+    console.error("/my 에러:", err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/** 찜한 상품 */
+router.get("/liked", async (req, res) => {
+  const user = readUserFromReq(req);
+  if (!user) {
+    return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
+
+  try {
+    const products = await Product.find({ likes: user.id })
+      .populate("seller", "userId nickname profileImage rating")
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    return res.json({ ok: true, products });
+  } catch (err: any) {
+    console.error("/liked 에러:", err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/** 상품 등록 */
 router.post("/", async (req, res) => {
   const user = readUserFromReq(req);
-  if (!user) return res.status(401).json({ ok: false, error: "unauthorized" });
+  if (!user) {
+    return res.status(401).json({ ok: false, error: "unauthorized" });
+  }
 
   const Body = z.object({
     title: z.string().min(1),
@@ -46,7 +89,7 @@ router.post("/", async (req, res) => {
     price: z.number().nonnegative(),
     category: z.string().optional().default("기타"),
     location: z.string().optional().default("미정"),
-    images: z.array(z.string().url()).optional().default([]),
+    images: z.array(z.string()).optional().default([]),
     lat: z.number().optional(),
     lng: z.number().optional(),
 
@@ -60,11 +103,10 @@ router.post("/", async (req, res) => {
       "중",
       "중하",
       "하",
-    ]).optional().default("미개봉"),
+    ]).optional().default("중"),
     buydate: z.string().optional().default(""),
     trade: z.string().optional().default(""), 
     deliveryfee: z.string().optional().default("배송비 미포함"),
-    isSailed: z.boolean().optional().default(false),
   });
 
   const parsed = Body.safeParse(req.body);
@@ -72,95 +114,32 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ ok: false, error: parsed.error.message });
   }
 
-  const doc = await Product.create({ ...parsed.data, seller: user.id });
-  return res.status(201).json({ ok: true, product: doc });
+  try {
+    const doc = await Product.create({ ...parsed.data, seller: user.id });
+    return res.status(201).json({ ok: true, product: doc });
+  } catch (err: any) {
+    console.error("상품 등록 에러:", err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
-// server/routes/products.ts
-
-// 상품 상태 변경
-router.patch("/:id/status", async (req, res) => {
-  const user = readUserFromReq(req);
-  if (!user) {
-    return res.status(401).json({ ok: false, error: "unauthorized" });
-  }
-
-  const { status } = z.object({
-    status: z.enum(["selling", "reserved", "sold"]),
-  }).parse(req.body);
-
-  const product = await Product.findById(req.params.id);
-  if (!product) {
-    return res.status(404).json({ ok: false, error: "상품을 찾을 수 없습니다" });
-  }
-
-  // 본인 상품인지 확인
-  if (product.seller.toString() !== user.id) {
-    return res.status(403).json({ ok: false, error: "권한이 없습니다" });
-  }
-
-  product.status = status;
-  await product.save();
-
-  return res.json({ ok: true, product });
-});
-
-// 상품 삭제
-router.delete("/:id", async (req, res) => {
-  const user = readUserFromReq(req);
-  if (!user) {
-    return res.status(401).json({ ok: false, error: "unauthorized" });
-  }
-
-  const product = await Product.findById(req.params.id);
-  if (!product) {
-    return res.status(404).json({ ok: false, error: "상품을 찾을 수 없습니다" });
-  }
-
-  if (product.seller.toString() !== user.id) {
-    return res.status(403).json({ ok: false, error: "권한이 없습니다" });
-  }
-
-  await product.deleteOne();
-
-  return res.json({ ok: true });
-});
-
-// 내가 올린 상품
-router.get("/my", async (req, res) => {
-  const user = readUserFromReq(req);
-  if (!user) {
-    return res.status(401).json({ ok: false, error: "unauthorized" });
-  }
-
-  const products = await Product.find({ seller: user.id })
-    .sort({ createdAt: -1 })
-    .limit(100);
-
-  return res.json({ ok: true, products });
-});
-
-// 찜한 상품
-router.get("/liked", async (req, res) => {
-  const user = readUserFromReq(req);
-  if (!user) {
-    return res.status(401).json({ ok: false, error: "unauthorized" });
-  }
-
-  const products = await Product.find({ likes: user.id })
-    .sort({ createdAt: -1 })
-    .limit(100);
-
-  return res.json({ ok: true, products });
-});
-
-/** 목록 (최신순) */
+/** 목록 (최신순) - 동적 경로 전에 와야 함 */
 router.get("/", async (_req, res) => {
-  const list = await Product.find().sort({ createdAt: -1 }).limit(200);
-  return res.json({ ok: true, products: list });
+  try {
+    const list = await Product.find()
+      .populate("seller", "userId nickname profileImage rating")
+      .sort({ createdAt: -1 })
+      .limit(200);
+    return res.json({ ok: true, products: list });
+  } catch (err: any) {
+    console.error("목록 조회 에러:", err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
-/** 단건 조회 - 좋아요 정보 포함 ✅ */
+// ✅ 동적 경로는 마지막에
+
+/** 단건 조회 - 좋아요 정보 포함 */
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
@@ -170,7 +149,6 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ ok: false, error: "not_found" });
     }
 
-    // ✅ 현재 유저의 좋아요 여부 확인
     const user = readUserFromReq(req);
     const isLiked = user && product.likes
       ? product.likes.some((id) => id.toString() === user.id)
@@ -182,11 +160,12 @@ router.get("/:id", async (req, res) => {
       isLiked,
     });
   } catch (err: any) {
+    console.error("단건 조회 에러:", err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
 
-/** 좋아요 토글 ✅ */
+/** 좋아요 토글 */
 router.post("/:id/like", async (req, res) => {
   try {
     const user = readUserFromReq(req);
@@ -221,6 +200,64 @@ router.post("/:id/like", async (req, res) => {
       likeCount: product.likeCount,
     });
   } catch (err: any) {
+    console.error("좋아요 토글 에러:", err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/** 상품 상태 변경 */
+router.patch("/:id/status", async (req, res) => {
+  try {
+    const user = readUserFromReq(req);
+    if (!user) {
+      return res.status(401).json({ ok: false, error: "unauthorized" });
+    }
+
+    const { status } = z.object({
+      status: z.enum(["selling", "reserved", "sold"]),
+    }).parse(req.body);
+
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ ok: false, error: "상품을 찾을 수 없습니다" });
+    }
+
+    if (product.seller.toString() !== user.id) {
+      return res.status(403).json({ ok: false, error: "권한이 없습니다" });
+    }
+
+    product.status = status;
+    await product.save();
+
+    return res.json({ ok: true, product });
+  } catch (err: any) {
+    console.error("상태 변경 에러:", err);
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/** 상품 삭제 */
+router.delete("/:id", async (req, res) => {
+  try {
+    const user = readUserFromReq(req);
+    if (!user) {
+      return res.status(401).json({ ok: false, error: "unauthorized" });
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ ok: false, error: "상품을 찾을 수 없습니다" });
+    }
+
+    if (product.seller.toString() !== user.id) {
+      return res.status(403).json({ ok: false, error: "권한이 없습니다" });
+    }
+
+    await product.deleteOne();
+
+    return res.json({ ok: true });
+  } catch (err: any) {
+    console.error("삭제 에러:", err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
