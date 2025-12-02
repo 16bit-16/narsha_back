@@ -364,17 +364,16 @@ router.post("/reset-password", limiter, async (req, res) => {
 });
 
 router.patch("/profile", async (req, res) => {
-  const user = readUserFromReq(req);
-  if (!user) {
-    return res.status(401).json({ ok: false, error: "로그인이 필요합니다" });
-  }
-
   try {
+    const user = readUserFromReq(req);
+    if (!user) {
+      return res.status(401).json({ ok: false, error: "로그인이 필요합니다" });
+    }
+
     const { nickname, profileImage } = req.body;
     const updateData: any = {};
 
     if (nickname && nickname !== user.nickname) {
-      // 닉네임 중복 체크
       const existing = await User.findOne({ nickname });
       if (existing) {
         return res.status(400).json({ ok: false, error: "이미 사용 중인 닉네임입니다" });
@@ -390,6 +389,7 @@ router.patch("/profile", async (req, res) => {
 
     return res.json({ ok: true, user: updated });
   } catch (err: any) {
+    console.error("프로필 수정 에러:", err);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
