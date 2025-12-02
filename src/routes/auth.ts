@@ -370,19 +370,20 @@ router.patch("/profile", async (req, res) => {
   }
 
   try {
-    const { userId, profileImage } = req.body;
+    const { nickname, profileImage } = req.body;
     const updateData: any = {};
 
-    if (userId && userId !== user.userId) {
-      const existing = await User.findOne({ userId });
+    if (nickname && nickname !== user.nickname) {
+      // 닉네임 중복 체크
+      const existing = await User.findOne({ nickname });
       if (existing) {
-        return res.status(400).json({ ok: false, error: "이미 사용 중인 아이디입니다" });
+        return res.status(400).json({ ok: false, error: "이미 사용 중인 닉네임입니다" });
       }
-      updateData.userId = userId;
+      updateData.nickname = nickname;
     }
 
     if (profileImage) {
-      updateData.profileImage = profileImage; // base64 또는 URL 그대로 저장
+      updateData.profileImage = profileImage;
     }
 
     const updated = await User.findByIdAndUpdate(user.id, updateData, { new: true });

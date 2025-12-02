@@ -57,8 +57,10 @@ export function readUserFromReq(req: ExRequest) {
   try {
     const decoded = jwt.verify(token, secret) as {
       id: string;
+      nickname: string;
       userId: string;
       email: string;
+      profileImage: string;
     };
     return decoded;
   } catch {
