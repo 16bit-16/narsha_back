@@ -49,6 +49,7 @@ app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 // 실제 라우터
 app.use("/api/auth", authRouter);
+app.use("/api/users", authRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/uploads", uploadRouter);
 
