@@ -6,6 +6,7 @@ const UserSchema = new Schema(
     passwordHash: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     emailVerified: { type: Boolean, default: false },
+    profileImage: { type: String, default: "" },
   },
   { timestamps: true }
 );

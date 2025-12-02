@@ -363,4 +363,34 @@ router.post("/reset-password", limiter, async (req, res) => {
   }
 });
 
+router.patch("/profile", async (req, res) => {
+  const user = readUserFromReq(req);
+  if (!user) {
+    return res.status(401).json({ ok: false, error: "로그인이 필요합니다" });
+  }
+
+  try {
+    const { userId, profileImage } = req.body;
+    const updateData: any = {};
+
+    if (userId && userId !== user.userId) {
+      const existing = await User.findOne({ userId });
+      if (existing) {
+        return res.status(400).json({ ok: false, error: "이미 사용 중인 아이디입니다" });
+      }
+      updateData.userId = userId;
+    }
+
+    if (profileImage) {
+      updateData.profileImage = profileImage; // base64 또는 URL 그대로 저장
+    }
+
+    const updated = await User.findByIdAndUpdate(user.id, updateData, { new: true });
+
+    return res.json({ ok: true, user: updated });
+  } catch (err: any) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 export default router;
