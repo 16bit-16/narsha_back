@@ -6,6 +6,7 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
+import compression from "compression";
 
 // 기존 라우터
 import authRouter from "./routes/auth";
@@ -38,6 +39,7 @@ app.use((req, res, next) => {
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
 // 바디/쿠키
+app.use(compression());
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
