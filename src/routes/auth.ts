@@ -209,6 +209,8 @@ router.post("/login", limiter, async (req, res) => {
       id: String(user._id),
       userId: user.userId,
       email: user.email,
+      nickname: user.nickname,
+      profileImage: user.profileImage,
     });
 
     // ✅ 쿠키 방식 유지 (옵션)

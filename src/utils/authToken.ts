@@ -10,6 +10,8 @@ export function signUser(payload: {
   id: string;
   userId: string;
   email: string;
+  nickname?: string;
+  profileImage?: string;
 }) {
   const raw = process.env.JWT_EXPIRES ?? "7d";
   const expiresIn: SignOptions["expiresIn"] = /^\d+$/.test(raw)
