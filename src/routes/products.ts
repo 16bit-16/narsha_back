@@ -130,7 +130,7 @@ router.get("/", async (req, res) => {
     // ✅ 필요한 필드만 선택
     const list = await Product.find()
       .select("_id title price images location status seller likeCount createdAt")
-      //.populate("seller", "userId nickname profileImage")
+      .populate("seller", "userId nickname profileImage")
       .sort({ createdAt: -1 })
       .limit(50); // 처음엔 50개만
 
