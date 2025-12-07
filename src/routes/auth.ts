@@ -219,12 +219,10 @@ router.post("/login", limiter, async (req, res) => {
     // ✅ 토큰을 응답에 포함 (localStorage용)
     return res.json({
       ok: true,
-      user: { 
-        id: String(user._id), 
-        userId: user.userId, 
+      user: {
+        id: String(user._id),
+        userId: user.userId,
         email: user.email,
-        nickname: user.nickname,
-        profileImage: user.profileImage, 
       },
       token, // ✅ 추가
     });
