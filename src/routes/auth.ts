@@ -170,6 +170,8 @@ router.post("/signup", limiter, async (req, res) => {
       userId,
       passwordHash: hash,
       email,
+      nickname: userId,
+      profileImage: "https://img2.joongna.com/common/Profile/Default/profile_m.png",
       emailVerified: true, // 실제 서비스는 verify 후 true 권장
     });
 
