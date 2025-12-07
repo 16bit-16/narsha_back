@@ -232,7 +232,7 @@ router.post("/login", limiter, async (req, res) => {
 router.get("/me", (req, res) => {
   const u = readUserFromReq(req);
   if (!u) return res.status(401).json({ ok: false, error: "unauthorized" });
-  return res.json({ ok: true, User: u });
+  return res.json({ ok: true, user: u });
 });
 
 /** 로그아웃 */
