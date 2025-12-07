@@ -11,7 +11,7 @@ const router = Router();
 router.get("/search", async (req, res) => {
   try {
     const query = req.query.q as string;
-    
+
     if (!query || !query.trim()) {
       return res.json({ ok: true, products: [] });
     }
@@ -29,9 +29,9 @@ router.get("/search", async (req, res) => {
     return res.json({ ok: true, products });
   } catch (err: any) {
     console.error("검색 에러:", err);
-    return res.status(500).json({ 
-      ok: false, 
-      error: err.message || "검색 실패" 
+    return res.status(500).json({
+      ok: false,
+      error: err.message || "검색 실패"
     });
   }
 });
@@ -105,7 +105,7 @@ router.post("/", async (req, res) => {
       "하",
     ]).optional().default("중"),
     buydate: z.string().optional().default(""),
-    trade: z.string().optional().default(""), 
+    trade: z.string().optional().default(""),
     deliveryfee: z.string().optional().default("배송비 미포함"),
   });
 
@@ -123,21 +123,27 @@ router.post("/", async (req, res) => {
   }
 });
 
-/** 목록 (최신순) - 동적 경로 전에 와야 함 */
-router.get("/", async (_req, res) => {
+/** 목록 (최신순) - 최적화 */
+router.get("/", async (req, res) => {
+  const startTime = Date.now();
   try {
+    // ✅ 필요한 필드만 선택
     const list = await Product.find()
-      .populate("seller", "userId nickname profileImage rating")
+      .select("_id title price images location status seller likeCount createdAt")
+      .populate("seller", "userId nickname profileImage")
       .sort({ createdAt: -1 })
-      .limit(200);
+      .limit(50); // 처음엔 50개만
+
+    const duration = Date.now() - startTime;
+    console.log(`✅ [GET /products] 완료: ${duration}ms (상품 수: ${list.length})`);
+
     return res.json({ ok: true, products: list });
   } catch (err: any) {
-    console.error("목록 조회 에러:", err);
+    const duration = Date.now() - startTime;
+    console.error(`❌ [GET /products] 에러 (${duration}ms):`, err.message);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
-
-// ✅ 동적 경로는 마지막에
 
 /** 단건 조회 - 좋아요 정보 포함 */
 router.get("/:id", async (req, res) => {

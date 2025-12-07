@@ -34,4 +34,8 @@ const ProductSchema = new Schema(
   { timestamps: true }
 );
 
+ProductSchema.index({ createdAt: -1 }); // 최신순 정렬 빠르게
+ProductSchema.index({ seller: 1 }); // 판매자별 조회 빠르게
+ProductSchema.index({ status: 1 }); // 상태별 조회 빠르게
+
 export default model("Product", ProductSchema);
