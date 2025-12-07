@@ -22,7 +22,7 @@ router.get("/search", async (req, res) => {
         { description: { $regex: query.trim(), $options: "i" } },
       ],
     })
-      .populate("seller", "userId nickname profileImage rating")
+      .populate("seller", "userId nickname profileImage")
       .sort({ createdAt: -1 })
       .limit(100);
 
@@ -45,7 +45,7 @@ router.get("/my", async (req, res) => {
 
   try {
     const products = await Product.find({ seller: user.id })
-      .populate("seller", "userId nickname profileImage rating")
+      .populate("seller", "userId nickname profileImage")
       .sort({ createdAt: -1 })
       .limit(100);
 
@@ -65,7 +65,7 @@ router.get("/liked", async (req, res) => {
 
   try {
     const products = await Product.find({ likes: user.id })
-      .populate("seller", "userId nickname profileImage rating")
+      .populate("seller", "userId nickname profileImage")
       .sort({ createdAt: -1 })
       .limit(100);
 
