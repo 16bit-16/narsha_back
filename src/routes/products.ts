@@ -133,9 +133,6 @@ router.get("/", async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(50); // 처음엔 50개만
 
-    const duration = Date.now() - startTime;
-    console.log(`✅ [GET /products] 완료: ${duration}ms (상품 수: ${list.length})`);
-
     return res.json({ ok: true, products: list });
   } catch (err: any) {
     const duration = Date.now() - startTime;
