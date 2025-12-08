@@ -235,10 +235,33 @@ router.post("/login", limiter, async (req, res) => {
 });
 
 /** 내 정보(me) */
-router.get("/me", (req, res) => {
+router.get("/me", async (req, res) => {
   const u = readUserFromReq(req);
   if (!u) return res.status(401).json({ ok: false, error: "unauthorized" });
-  return res.json({ ok: true, user: u });
+  
+  try {
+    // ✅ DB에서 전체 사용자 정보 조회
+    const user = await User.findById(u.id)
+      .select('userId nickname email profileImage');
+    
+    if (!user) {
+      return res.status(404).json({ ok: false, error: "사용자를 찾을 수 없습니다" });
+    }
+    
+    return res.json({ 
+      ok: true, 
+      user: {
+        _id: user._id,
+        userId: user.userId,
+        nickname: user.nickname,
+        email: user.email,
+        profileImage: user.profileImage
+      }
+    });
+  } catch (err) {
+    console.error('사용자 조회 실패:', err);
+    return res.status(500).json({ ok: false, error: "서버 오류" });
+  }
 });
 
 /** 로그아웃 */
