@@ -28,7 +28,7 @@ router.post("/generate-description", async (req, res) => {
 
         // ✅ OpenAI Vision API 호출
         const response = await openai.chat.completions.create({
-            model: "gpt-4o",
+            model: "gpt-5",
             messages: [
                 {
                     role: "user",
