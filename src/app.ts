@@ -10,6 +10,7 @@ import compression from "compression";
 import messagesRouter from "./routes/messages";
 import http from "http";
 import { initializeSocket } from "./socket";
+import aiRouter from "./routes/ai";
 
 // 기존 라우터
 import authRouter from "./routes/auth";
@@ -57,6 +58,7 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 // 실제 라우터
+app.use("/api/ai", aiRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", authRouter);
 app.use("/api/products", productsRouter);

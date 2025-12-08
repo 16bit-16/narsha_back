@@ -4,7 +4,7 @@ import type { Request as ExRequest, Response as ExResponse } from "express";
 import "cookie-parser";
 
 const secret = process.env.JWT_SECRET || "dev-secret";
-const cookieName = process.env.JWT_COOKIE || "krush_token";
+const cookieName = process.env.JWT_COOKIE || "palpal_token";
 
 export function signUser(payload: {
   id: string;
