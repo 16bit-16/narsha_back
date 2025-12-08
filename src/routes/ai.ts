@@ -37,6 +37,7 @@ router.post("/generate-description", async (req, res) => {
                             type: "image_url",
                             image_url: {
                                 url: imageUrl,
+                                detail: "low",
                             },
                         },
                         {
