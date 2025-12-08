@@ -28,7 +28,7 @@ router.post("/generate-description", async (req, res) => {
 
         // ✅ OpenAI Vision API 호출
         const response = await openai.chat.completions.create({
-            model: "gpt-5",
+            model: "gpt-4",
             messages: [
                 {
                     role: "user",
@@ -60,7 +60,7 @@ JSON 형식으로 응답해주세요:
                     ],
                 },
             ],
-            max_completion_tokens: 700,
+            max_tokens: 500,
         });
 
         // ✅ 응답 파싱
