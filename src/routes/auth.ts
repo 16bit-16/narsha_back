@@ -216,7 +216,7 @@ router.post("/login", limiter, async (req, res) => {
 
     // ✅ 쿠키 방식 유지 (옵션)
     setAuthCookie(res, token);
-    
+
     // ✅ 토큰을 응답에 포함 (localStorage용)
     return res.json({
       ok: true,
@@ -239,18 +239,18 @@ router.post("/login", limiter, async (req, res) => {
 router.get("/me", async (req, res) => {
   const u = readUserFromReq(req);
   if (!u) return res.status(401).json({ ok: false, error: "unauthorized" });
-  
+
   try {
     // ✅ DB에서 전체 사용자 정보 조회
     const user = await User.findById(u.id)
       .select('userId nickname email profileImage');
-    
+
     if (!user) {
       return res.status(404).json({ ok: false, error: "사용자를 찾을 수 없습니다" });
     }
-    
-    return res.json({ 
-      ok: true, 
+
+    return res.json({
+      ok: true,
       user: {
         _id: user._id,
         userId: user.userId,
@@ -294,6 +294,20 @@ router.post("/find/id", limiter, async (req, res) => {
     await EmailCode.deleteOne({ email });
 
     return res.json({ ok: true, userId: user.userId });
+  } catch (err: any) {
+    return res.status(400).json({ ok: false, error: err.message });
+  }
+});
+
+router.post("checkId", limiter, async (req, res) => {
+  try {
+    const id = z.object({
+      userId: z.string().min(1),
+    }).parse(req.body).userId;
+    const user = await User.findOne({ userId: id });
+    if (!user) {
+      return res.status(404).json({ ok: false, error: "사용자를 찾을 수 없습니다" });
+    }
   } catch (err: any) {
     return res.status(400).json({ ok: false, error: err.message });
   }
@@ -420,7 +434,7 @@ router.patch("/profile", async (req, res) => {
         // 이미지 최적화
         const optimizedUrl = await optimizeProfileImage(buffer, "profile");
         updateData.profileImage = optimizedUrl;
-        
+
       } catch (err) {
         console.error("프로필 이미지 처리 실패:", err);
         return res.status(400).json({ ok: false, error: "이미지 처리 실패" });
