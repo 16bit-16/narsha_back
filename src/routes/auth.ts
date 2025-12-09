@@ -10,6 +10,7 @@ import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 
 import EmailCode from "../models/EmailCode";
+import { optimizeProfileImage } from "../utils/ImageOptimizer";
 import User from "../models/User";
 import {
   signUser,
@@ -410,8 +411,21 @@ router.patch("/profile", async (req, res) => {
       updateData.nickname = nickname;
     }
 
-    if (profileImage) {
-      updateData.profileImage = profileImage;
+    if (profileImage && profileImage.startsWith("data:image")) {
+      try {
+        // Base64를 Buffer로 변환
+        const base64Data = profileImage.split(",")[1];
+        const buffer = Buffer.from(base64Data, "base64");
+
+        // 이미지 최적화
+        const optimizedUrl = await optimizeProfileImage(buffer, "profile");
+        updateData.profileImage = optimizedUrl;
+
+        console.log(`✅ 프로필 이미지 저장: ${optimizedUrl}`);
+      } catch (err) {
+        console.error("프로필 이미지 처리 실패:", err);
+        return res.status(400).json({ ok: false, error: "이미지 처리 실패" });
+      }
     }
 
     const updated = await User.findByIdAndUpdate(user.id, updateData, { new: true });
