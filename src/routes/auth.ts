@@ -299,17 +299,39 @@ router.post("/find/id", limiter, async (req, res) => {
   }
 });
 
-router.post("checkId", limiter, async (req, res) => {
+router.post("/checkId", limiter, async (req, res) => {
   try {
-    const id = z.object({
-      userId: z.string().min(1),
-    }).parse(req.body).userId;
-    const user = await User.findOne({ userId: id });
-    if (!user) {
-      return res.status(404).json({ ok: false, error: "사용자를 찾을 수 없습니다" });
+    const { userId } = req.body;
+
+    if (!userId || userId.trim().length < 3) {
+      return res.status(400).json({
+        ok: false,
+        error: "아이디는 3자 이상이어야 합니다",
+      });
     }
+
+    // ✅ 중복 확인
+    const existing = await User.findOne({ userId: userId.trim() });
+
+    if (existing) {
+      return res.json({
+        ok: true,
+        available: false,
+        message: "이미 사용 중인 아이디입니다",
+      });
+    }
+
+    return res.json({
+      ok: true,
+      available: true,
+      message: "사용 가능한 아이디입니다",
+    });
   } catch (err: any) {
-    return res.status(400).json({ ok: false, error: err.message });
+    console.error("아이디 중복 확인 에러:", err);
+    return res.status(500).json({
+      ok: false,
+      error: err.message || "확인 실패",
+    });
   }
 });
 
