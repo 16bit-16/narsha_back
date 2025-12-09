@@ -420,8 +420,7 @@ router.patch("/profile", async (req, res) => {
         // 이미지 최적화
         const optimizedUrl = await optimizeProfileImage(buffer, "profile");
         updateData.profileImage = optimizedUrl;
-
-        console.log(`✅ 프로필 이미지 저장: ${optimizedUrl}`);
+        
       } catch (err) {
         console.error("프로필 이미지 처리 실패:", err);
         return res.status(400).json({ ok: false, error: "이미지 처리 실패" });

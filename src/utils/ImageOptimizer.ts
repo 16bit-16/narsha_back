@@ -33,7 +33,8 @@ export async function optimizeProfileImage(
             .toFile(filepath);
 
         // ✅ URL 반환 (짧음)
-        return `/uploads/profiles/${optimizedFilename}`;
+        const apiBase = process.env.API_BASE || "https://api.palpalshop.shop";
+        return `${apiBase}/uploads/profiles/${optimizedFilename}`;
     } catch (err) {
         console.error("이미지 최적화 실패:", err);
         throw new Error("이미지 최적화 실패");
