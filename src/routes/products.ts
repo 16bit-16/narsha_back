@@ -5,7 +5,7 @@ import { readUserFromReq } from "../utils/authToken";
 
 const router = Router();
 
-// ✅ 구체적인 라우트가 먼저 와야 함!
+// 구체적인 라우트가 먼저 와야 함!
 
 /** 검색 */
 router.get("/search", async (req, res) => {
@@ -127,7 +127,7 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   const startTime = Date.now();
   try {
-    // ✅ 필요한 필드만 선택
+    // 필요한 필드만 선택
     const list = await Product.find()
       .select("_id title price images location status seller likeCount createdAt")
       .sort({ createdAt: -1 })

@@ -34,19 +34,19 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024, files: 5 },
 });
 
-// ✅ 절대 URL 계산 유틸 개선
+// 절대 URL 계산 유틸 개선
 function getBaseUrl(req: Request) {
-  // ✅ 1순위: 환경변수 (프로덕션용)
+  // 1순위: 환경변수 (프로덕션용)
   if (process.env.API_URL) {
     return process.env.API_URL;
   }
 
-  // ✅ 2순위: PUBLIC_BASE_URL
+  // 2순위: PUBLIC_BASE_URL
   if (process.env.PUBLIC_BASE_URL) {
     return process.env.PUBLIC_BASE_URL;
   }
 
-  // ✅ 3순위: 요청 헤더로 추론 (개발용)
+  // 3순위: 요청 헤더로 추론 (개발용)
   const proto =
     (req.headers["x-forwarded-proto"] as string) || req.protocol || "http";
   const host = req.get("host");
@@ -75,12 +75,12 @@ router.post(
 
       const urls = await Promise.all(
         files.map(async (f) => {
-          // ✅ .webp 확장자로 변경
+          // .webp 확장자로 변경
           const baseName = path.basename(f.path, path.extname(f.path));
           const outputFilename = `optimized-${baseName}.webp`;
           const outputPath = path.join(uploadDir, outputFilename);
 
-          // ✅ WebP로 변환 (JPEG보다 30-50% 작음)
+          // WebP로 변환 (JPEG보다 30-50% 작음)
           await sharp(f.path)
             .resize(1200, 1200, { fit: "inside" })
             .webp({ quality: 85 })

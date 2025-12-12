@@ -19,7 +19,7 @@ import productsRouter from "./routes/products";
 import uploadRouter from "./routes/upload";
 
 const app = express();
-const httpServer = http.createServer(app); // ✅ 이미 있음
+const httpServer = http.createServer(app); // 이미 있음
 
 // CORS 설정 — 프리플라이트(OPTIONS) 완전 허용
 const allowedOrigins = ["https://palpalshop.shop", "http://local.palpalshop.shop:5173", "https://firstnarsha.vercel.app", "https://www.palpalshop.shop"];
@@ -46,7 +46,7 @@ app.use(compression());
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 
-// ✅ Socket.io 초기화
+// Socket.io 초기화
 initializeSocket(httpServer);
 
 app.use("/api/messages", messagesRouter);
@@ -73,14 +73,14 @@ app.use("/api/messages", messagesRouter);
     const port = Number(process.env.PORT) || 4000;
     const host = process.env.HOST ?? "0.0.0.0";
 
-    // ✅ app.listen → httpServer.listen 변경 (중요!)
+    // app.listen → httpServer.listen 변경 (중요!)
     httpServer.listen(port, host, () => {
       console.log(
         `🚀 Server running at http://${
           host === "0.0.0.0" ? "127.0.0.1" : host
         }:${port}`
       );
-      console.log(`✅ WebSocket ready`);
+      console.log(`WebSocket ready`);
     });
   } catch (err) {
     console.error("Server startup failed:", err);

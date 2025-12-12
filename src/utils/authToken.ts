@@ -22,9 +22,9 @@ export function signUser(payload: {
 
 export function setAuthCookie(res: ExResponse, token: string) {
   res.cookie(cookieName, token, {
-    httpOnly: true, // ✅ 항상 true
+    httpOnly: true, // 항상 true
     sameSite: "none",
-    secure: true, // ✅ 항상 true
+    secure: true, // 항상 true
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   });
@@ -32,15 +32,15 @@ export function setAuthCookie(res: ExResponse, token: string) {
 
 export function clearAuthCookie(res: ExResponse) {
   res.cookie(cookieName, "", {
-    httpOnly: true, // ✅ 항상 true
+    httpOnly: true, // 항상 true
     sameSite: "none",
-    secure: true, // ✅ 항상 true
+    secure: true, // 항상 true
     expires: new Date(0),
     path: "/",
   });
 }
 
-// ✅ Authorization 헤더와 쿠키 둘 다 지원
+// Authorization 헤더와 쿠키 둘 다 지원
 export function readUserFromReq(req: ExRequest) {
   let token: string | undefined;
 

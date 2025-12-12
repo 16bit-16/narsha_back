@@ -25,14 +25,14 @@ export function initializeSocket(httpServer: HTTPServer) {
     io.on("connection", (socket: CustomSocket) => {
         console.log(`사용자 연결: ${socket.id}`);
 
-        // ✅ 사용자 ID와 소켓 ID 매핑
+        // 사용자 ID와 소켓 ID 매핑
         socket.on("join", (userId: string) => {
             socket.userId = userId;
             userSockets.set(userId, socket.id);
             console.log(`${userId}가 입장했습니다. (${socket.id})`);
         });
 
-        // ✅ 메시지 수신
+        // 메시지 수신
         socket.on(
             "send_message",
             async (data: {
@@ -50,7 +50,7 @@ export function initializeSocket(httpServer: HTTPServer) {
                         .sort()
                         .join("-");
 
-                    // ✅ 메시지 저장
+                    // 메시지 저장
                     const message = await Message.create({
                         roomId,
                         senderId: socket.userId,
@@ -59,7 +59,7 @@ export function initializeSocket(httpServer: HTTPServer) {
                         text: data.text,
                     });
 
-                    // ✅ 송신자에게 전송
+                    // 송신자에게 전송
                     socket.emit("message_sent", {
                         _id: message._id,
                         text: message.text,
@@ -68,7 +68,7 @@ export function initializeSocket(httpServer: HTTPServer) {
                         createdAt: message.createdAt,
                     });
 
-                    // ✅ 수신자에게 전송 (온라인이면)
+                    // 수신자에게 전송 (온라인이면)
                     const receiverSocketId = userSockets.get(data.receiverId);
                     if (receiverSocketId) {
                         io.to(receiverSocketId).emit("receive_message", {
@@ -90,7 +90,7 @@ export function initializeSocket(httpServer: HTTPServer) {
             }
         );
 
-        // ✅ 연결 해제
+        // 연결 해제
         socket.on("disconnect", () => {
             if (socket.userId) {
                 userSockets.delete(socket.userId);

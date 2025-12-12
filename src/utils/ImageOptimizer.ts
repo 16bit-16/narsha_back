@@ -19,11 +19,11 @@ export async function optimizeProfileImage(
         // 파일명 생성 (짧게)
         const timestamp = Date.now();
         const randomStr = Math.random().toString(36).slice(2, 8);
-        const optimizedFilename = `p_${timestamp}_${randomStr}.webp`; // ✅ 짧은 이름
+        const optimizedFilename = `p_${timestamp}_${randomStr}.webp`; // 짧은 이름
 
         const filepath = path.join(uploadsDir, optimizedFilename);
 
-        // ✅ Sharp로 이미지 최적화
+        // Sharp로 이미지 최적화
         await sharp(buffer)
             .resize(400, 400, {
                 fit: "cover",
@@ -32,7 +32,7 @@ export async function optimizeProfileImage(
             .webp({ quality: 80 }) // WebP로 변환 (크기 감소)
             .toFile(filepath);
 
-        // ✅ URL 반환 (짧음)
+        // URL 반환 (짧음)
         const apiBase = process.env.API_BASE || "https://api.palpalshop.shop";
         return `${apiBase}/uploads/profiles/${optimizedFilename}`;
     } catch (err) {

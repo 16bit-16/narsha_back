@@ -26,7 +26,7 @@ router.post("/generate-description", async (req, res) => {
             return res.status(400).json({ ok: false, error: "이미지 URL이 필요합니다" });
         }
 
-        // ✅ OpenAI Vision API 호출
+        // OpenAI Vision API 호출
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
@@ -63,7 +63,7 @@ JSON 형식으로 응답해주세요:
             max_tokens: 500,
         });
 
-        // ✅ 응답 파싱
+        // 응답 파싱
         const content = response.choices[0].message.content;
         let result;
 

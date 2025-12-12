@@ -214,10 +214,10 @@ router.post("/login", limiter, async (req, res) => {
       email: user.email,
     });
 
-    // ✅ 쿠키 방식 유지 (옵션)
+    // 쿠키 방식 유지 (옵션)
     setAuthCookie(res, token);
 
-    // ✅ 토큰을 응답에 포함 (localStorage용)
+    // 토큰을 응답에 포함 (localStorage용)
     return res.json({
       ok: true,
       user: {
@@ -225,7 +225,7 @@ router.post("/login", limiter, async (req, res) => {
         userId: user.userId,
         email: user.email,
       },
-      token, // ✅ 추가
+      token, // 추가
     });
   } catch (e: any) {
     console.error("login error:", e);
@@ -241,7 +241,7 @@ router.get("/me", async (req, res) => {
   if (!u) return res.status(401).json({ ok: false, error: "unauthorized" });
 
   try {
-    // ✅ DB에서 전체 사용자 정보 조회
+    // DB에서 전체 사용자 정보 조회
     const user = await User.findById(u.id)
       .select('userId nickname email profileImage');
 
@@ -310,7 +310,7 @@ router.post("/checkId", limiter, async (req, res) => {
       });
     }
 
-    // ✅ 중복 확인
+    // 중복 확인
     const existing = await User.findOne({ userId: userId.trim() });
 
     if (existing) {
