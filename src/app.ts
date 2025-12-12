@@ -49,8 +49,6 @@ app.use(cookieParser());
 // Socket.io 초기화
 initializeSocket(httpServer);
 
-app.use("/api/messages", messagesRouter);
-
 // 업로드 파일 정적 제공
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
