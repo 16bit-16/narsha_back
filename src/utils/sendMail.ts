@@ -25,7 +25,6 @@ export async function sendMail(to: string, subject: string, text: string) {
     // 메일 발송 시도
     const info = await transporter.sendMail(mailOptions);
 
-    console.log("Email sent successfully:", info.response);
     return true;
   } catch (error) {
     console.error("Error sending email:", error);
