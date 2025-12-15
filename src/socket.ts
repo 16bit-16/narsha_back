@@ -39,9 +39,9 @@ export function initializeSocket(httpServer: HTTPServer) {
                     socket.emit("error", "로그인이 필요합니다");
                     return;
                 }
-    
+        
                 const roomId = [socket.userId, data.receiverId].sort().join("-");
-    
+        
                 const message = await Message.create({
                     roomId,
                     senderId: socket.userId,
@@ -49,17 +49,20 @@ export function initializeSocket(httpServer: HTTPServer) {
                     productId: data.productId,
                     text: data.text,
                 });
-    
+        
                 console.log("메시지 저장됨:", message._id);
-    
+        
+                // 송신자에게만 message_sent 보내기
                 socket.emit("message_sent", {
                     _id: message._id,
                     text: message.text,
                     senderId: socket.userId,
                     receiverId: data.receiverId,
+                    productId: data.productId,
                     createdAt: message.createdAt,
                 });
-    
+        
+                // 수신자에게만 receive_message 보내기
                 const receiverSocketId = userSockets.get(data.receiverId);
                 console.log(`수신자 ${data.receiverId} 소켓ID: ${receiverSocketId}`);
                 
@@ -72,7 +75,7 @@ export function initializeSocket(httpServer: HTTPServer) {
                         productId: data.productId,
                         createdAt: message.createdAt,
                     });
-                    console.log("메시지 전송 완료");
+                    console.log("receive_message 전송 완료");
                 }
             } catch (err) {
                 console.error("메시지 저장 실패:", err);
