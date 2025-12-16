@@ -21,6 +21,8 @@ import uploadRouter from "./routes/upload";
 const app = express();
 const httpServer = http.createServer(app); // 이미 있음
 
+app.set('trust proxy', 1);
+
 // CORS 설정 — 프리플라이트(OPTIONS) 완전 허용
 const allowedOrigins = ["https://palpalshop.shop", "http://local.palpalshop.shop:5173", "https://firstnarsha.vercel.app", "https://www.palpalshop.shop"];
 app.use((req, res, next) => {
