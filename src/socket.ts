@@ -1,92 +1,82 @@
-import { Server as HTTPServer } from "http";
-import { Server as SocketIOServer, Socket } from "socket.io";
-import Message from "./models/Message";
-import { readUserFromReq } from "./utils/authToken";
+// backend/src/socket.ts
 
-interface CustomSocket extends Socket {
-    userId?: string;
-}
+import { Server as HTTPServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
+import Chat from "./models/Chat";
 
 export function initializeSocket(httpServer: HTTPServer) {
     const io = new SocketIOServer(httpServer, {
         cors: {
             origin: [
-                "http://local.palpalshop.shop:5173",
                 "http://localhost:5173",
-                "https://palpalshop.shop",
                 "https://www.palpalshop.shop",
+                "https://palpalshop.shop",
             ],
             credentials: true,
         },
     });
 
-    // 사용자 연결 추적
-    const userSockets = new Map<string, string>(); // userId -> socketId
+    const userSockets = new Map<string, string>();
 
-    io.on("connection", (socket: CustomSocket) => {
-        console.log("새 사용자 연결:", socket.id);
-    
-        socket.on("join", (userId: string) => {
-            socket.userId = userId;
+    io.on("connection", (socket) => {
+        console.log("사용자 연결:", socket.id);
+
+        // 사용자 등록
+        socket.on("user_login", (userId: string) => {
             userSockets.set(userId, socket.id);
-            console.log(`${userId} (${socket.id}) 입장, 총 ${userSockets.size}명`);
+            console.log(`${userId} 온라인`);
         });
-    
-        socket.on("send_message", async (data: any) => {
-            console.log("send_message 수신:", data);
+
+        // 메시지 수신
+        socket.on("send_message", async (data: {
+            senderId: string;
+            receiverId: string;
+            productId: string;
+            message: string;
+        }) => {
             try {
-                if (!socket.userId) {
-                    socket.emit("error", "로그인이 필요합니다");
-                    return;
-                }
-        
-                const roomId = [socket.userId, data.receiverId].sort().join("-");
-        
-                const message = await Message.create({
-                    roomId,
-                    senderId: socket.userId,
-                    receiverId: data.receiverId,
-                    productId: data.productId,
-                    text: data.text,
+                // DB에 저장
+                const chat = await Chat.create({
+                    sender: data.senderId,
+                    receiver: data.receiverId,
+                    product: data.productId,
+                    message: data.message,
                 });
-        
-                console.log("메시지 저장됨:", message._id);
-        
-                // 송신자에게만 message_sent 보내기
-                socket.emit("message_sent", {
-                    _id: message._id,
-                    text: message.text,
-                    senderId: socket.userId,
-                    receiverId: data.receiverId,
-                    productId: data.productId,
-                    createdAt: message.createdAt,
-                });
-        
-                // 수신자에게만 receive_message 보내기
+
+                await chat.populate("sender", "nickname profileImage");
+                await chat.populate("receiver", "nickname profileImage");
+
+                // 수신자에게 전송
                 const receiverSocketId = userSockets.get(data.receiverId);
-                console.log(`수신자 ${data.receiverId} 소켓ID: ${receiverSocketId}`);
-                
                 if (receiverSocketId) {
                     io.to(receiverSocketId).emit("receive_message", {
-                        _id: message._id,
-                        text: message.text,
-                        senderId: socket.userId,
-                        receiverId: data.receiverId,
-                        productId: data.productId,
-                        createdAt: message.createdAt,
+                        _id: chat._id,
+                        sender: chat.sender,
+                        receiver: chat.receiver,
+                        message: chat.message,
+                        createdAt: chat.createdAt,
                     });
-                    console.log("receive_message 전송 완료");
                 }
+
+                // 송신자에게 확인
+                socket.emit("message_sent", {
+                    _id: chat._id,
+                    message: chat.message,
+                    createdAt: chat.createdAt,
+                });
             } catch (err) {
                 console.error("메시지 저장 실패:", err);
                 socket.emit("error", "메시지 전송 실패");
             }
         });
-    
+
         socket.on("disconnect", () => {
-            if (socket.userId) {
-                userSockets.delete(socket.userId);
-                console.log(`${socket.userId} 퇴장, 남은 사용자: ${userSockets.size}명`);
+            for (const [userId, id] of userSockets) {
+                if (id === socket.id) {
+                    userSockets.delete(userId);
+                    console.log(`${userId} 오프라인`);
+                    break;
+                }
             }
         });
     });

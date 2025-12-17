@@ -7,7 +7,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import compression from "compression";
-import messagesRouter from "./routes/messages";
+import messagesRouter from "./routes/chat";
 import http from "http";
 import { initializeSocket } from "./socket";
 import aiRouter from "./routes/ai";
