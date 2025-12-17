@@ -1,16 +1,20 @@
-// backend/src/socket.ts
-
 import { Server as HTTPServer } from "http";
-import { Server as SocketIOServer } from "socket.io";
+import { Server as SocketIOServer, Socket } from "socket.io";
 import Chat from "./models/Chat";
+
+// ✅ CustomSocket 타입 정의
+interface CustomSocket extends Socket {
+    userId?: string;
+}
 
 export function initializeSocket(httpServer: HTTPServer) {
     const io = new SocketIOServer(httpServer, {
         cors: {
             origin: [
+                "http://localhost:5173",
+                "http://local.palpalshop.shop:5173",
                 "https://www.palpalshop.shop",
                 "https://palpalshop.shop",
-                "http://local.palpalshop.shop:5173",
             ],
             credentials: true,
         },
@@ -18,52 +22,58 @@ export function initializeSocket(httpServer: HTTPServer) {
 
     const userSockets = new Map<string, string>();
 
-    io.on("connection", (socket) => {
-        console.log("사용자 연결:", socket.id);
+    io.on("connection", (socket: CustomSocket) => {  // ✅ CustomSocket 사용
+        console.log("새 사용자 연결:", socket.id);
 
-        // 사용자 등록
         socket.on("user_login", (userId: string) => {
+            socket.userId = userId;
             userSockets.set(userId, socket.id);
-            console.log(`${userId} 온라인`);
+            console.log(`${userId} (${socket.id}) 입장, 총 ${userSockets.size}명`);
         });
 
-        // 메시지 수신
-        socket.on("send_message", async (data: {
-            senderId: string;
-            receiverId: string;
-            productId: string;
-            message: string;
-        }) => {
+        socket.on("send_message", async (data: any) => {
             try {
-                // DB에 저장
-                const chat = await Chat.create({
-                    sender: data.senderId,
+                if (!socket.userId) {
+                    socket.emit("error", "로그인이 필요합니다");
+                    return;
+                }
+
+                const roomId = [socket.userId, data.receiverId].sort().join("-");
+
+                const message = await Chat.create({
+                    sender: socket.userId,
                     receiver: data.receiverId,
                     product: data.productId,
                     message: data.message,
                 });
 
-                await chat.populate("sender", "nickname profileImage");
-                await chat.populate("receiver", "nickname profileImage");
+                await message.populate("sender", "nickname profileImage");
+                await message.populate("receiver", "nickname profileImage");
 
-                // 수신자에게 전송
+                console.log("메시지 저장됨:", message._id);
+
+                socket.emit("message_sent", {
+                    _id: message._id,
+                    sender: message.sender,
+                    receiver: message.receiver,
+                    message: message.message,
+                    product: data.productId,
+                    createdAt: message.createdAt,
+                });
+
                 const receiverSocketId = userSockets.get(data.receiverId);
                 if (receiverSocketId) {
                     io.to(receiverSocketId).emit("receive_message", {
-                        _id: chat._id,
-                        sender: chat.sender,
-                        receiver: chat.receiver,
-                        message: chat.message,
-                        createdAt: chat.createdAt,
+                        _id: message._id,
+                        sender: message.sender,
+                        receiver: message.receiver,
+                        message: message.message,
+                        product: data.productId,
+                        createdAt: message.createdAt,
                     });
+                    console.log("receive_message 전송 완료");
                 }
 
-                // 송신자에게 확인
-                socket.emit("message_sent", {
-                    _id: chat._id,
-                    message: chat.message,
-                    createdAt: chat.createdAt,
-                });
             } catch (err) {
                 console.error("메시지 저장 실패:", err);
                 socket.emit("error", "메시지 전송 실패");
@@ -71,12 +81,9 @@ export function initializeSocket(httpServer: HTTPServer) {
         });
 
         socket.on("disconnect", () => {
-            for (const [userId, id] of userSockets) {
-                if (id === socket.id) {
-                    userSockets.delete(userId);
-                    console.log(`${userId} 오프라인`);
-                    break;
-                }
+            if (socket.userId) {
+                userSockets.delete(socket.userId);
+                console.log(`${socket.userId} 퇴장, 남은 사용자: ${userSockets.size}명`);
             }
         });
     });
