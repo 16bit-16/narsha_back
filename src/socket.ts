@@ -2,7 +2,7 @@ import { Server as HTTPServer } from "http";
 import { Server as SocketIOServer, Socket } from "socket.io";
 import Chat from "./models/Chat";
 
-// ✅ CustomSocket 타입 정의
+// CustomSocket 타입 정의
 interface CustomSocket extends Socket {
     userId?: string;
 }
@@ -22,7 +22,7 @@ export function initializeSocket(httpServer: HTTPServer) {
 
     const userSockets = new Map<string, string>();
 
-    io.on("connection", (socket: CustomSocket) => {  // ✅ CustomSocket 사용
+    io.on("connection", (socket: CustomSocket) => {  // CustomSocket 사용
         console.log("새 사용자 연결:", socket.id);
 
         socket.on("user_login", (userId: string) => {
@@ -37,30 +37,38 @@ export function initializeSocket(httpServer: HTTPServer) {
                     socket.emit("error", "로그인이 필요합니다");
                     return;
                 }
-
+        
                 const roomId = [socket.userId, data.receiverId].sort().join("-");
-
+        
+                // message 또는 image 둘 중 하나는 필수
+                if (!data.message?.trim() && !data.image) {
+                    socket.emit("error", "메시지 또는 이미지를 입력하세요");
+                    return;
+                }
+        
                 const message = await Chat.create({
                     sender: socket.userId,
                     receiver: data.receiverId,
                     product: data.productId,
-                    message: data.message,
+                    message: data.message || "",
+                    image: data.image || null,  // 이미지 URL 저장
                 });
-
+        
                 await message.populate("sender", "nickname profileImage");
                 await message.populate("receiver", "nickname profileImage");
-
+        
                 console.log("메시지 저장됨:", message._id);
-
+        
                 socket.emit("message_sent", {
                     _id: message._id,
                     sender: message.sender,
                     receiver: message.receiver,
                     message: message.message,
+                    image: message.image,  // 이미지 포함
                     product: data.productId,
                     createdAt: message.createdAt,
                 });
-
+        
                 const receiverSocketId = userSockets.get(data.receiverId);
                 if (receiverSocketId) {
                     io.to(receiverSocketId).emit("receive_message", {
@@ -68,12 +76,13 @@ export function initializeSocket(httpServer: HTTPServer) {
                         sender: message.sender,
                         receiver: message.receiver,
                         message: message.message,
+                        image: message.image,  // 이미지 포함
                         product: data.productId,
                         createdAt: message.createdAt,
                     });
                     console.log("receive_message 전송 완료");
                 }
-
+        
             } catch (err) {
                 console.error("메시지 저장 실패:", err);
                 socket.emit("error", "메시지 전송 실패");

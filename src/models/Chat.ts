@@ -8,6 +8,7 @@ const ChatSchema = new Schema(
         receiver: { type: Types.ObjectId, ref: "User", required: true },
         product: { type: Types.ObjectId, ref: "Product", required: true },
         message: { type: String, required: true },
+        image: { type: String, default: null },
         read: { type: Boolean, default: false },
     },
     { timestamps: true }
