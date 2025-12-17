@@ -23,12 +23,10 @@ export function initializeSocket(httpServer: HTTPServer) {
     const userSockets = new Map<string, string>();
 
     io.on("connection", (socket: CustomSocket) => {  // CustomSocket 사용
-        console.log("새 사용자 연결:", socket.id);
 
         socket.on("user_login", (userId: string) => {
             socket.userId = userId;
             userSockets.set(userId, socket.id);
-            console.log(`${userId} (${socket.id}) 입장, 총 ${userSockets.size}명`);
         });
 
         socket.on("send_message", async (data: any) => {
@@ -57,14 +55,12 @@ export function initializeSocket(httpServer: HTTPServer) {
                 await message.populate("sender", "nickname profileImage");
                 await message.populate("receiver", "nickname profileImage");
         
-                console.log("메시지 저장됨:", message._id);
-        
                 socket.emit("message_sent", {
                     _id: message._id,
                     sender: message.sender,
                     receiver: message.receiver,
                     message: message.message,
-                    image: message.image,  // 이미지 포함
+                    image: message.image,
                     product: data.productId,
                     createdAt: message.createdAt,
                 });
@@ -80,7 +76,6 @@ export function initializeSocket(httpServer: HTTPServer) {
                         product: data.productId,
                         createdAt: message.createdAt,
                     });
-                    console.log("receive_message 전송 완료");
                 }
         
             } catch (err) {
@@ -92,7 +87,6 @@ export function initializeSocket(httpServer: HTTPServer) {
         socket.on("disconnect", () => {
             if (socket.userId) {
                 userSockets.delete(socket.userId);
-                console.log(`${socket.userId} 퇴장, 남은 사용자: ${userSockets.size}명`);
             }
         });
     });
