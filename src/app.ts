@@ -46,7 +46,7 @@ app.use(cors({ origin: allowedOrigins, credentials: true }));
 
 // 바디/쿠키
 app.use(compression());
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 
 // Socket.io 초기화
