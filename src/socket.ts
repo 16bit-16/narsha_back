@@ -8,9 +8,9 @@ export function initializeSocket(httpServer: HTTPServer) {
     const io = new SocketIOServer(httpServer, {
         cors: {
             origin: [
-                "http://localhost:5173",
                 "https://www.palpalshop.shop",
                 "https://palpalshop.shop",
+                "http://local.palpalshop.shop:5173",
             ],
             credentials: true,
         },

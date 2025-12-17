@@ -11,6 +11,7 @@ import messagesRouter from "./routes/chat";
 import http from "http";
 import { initializeSocket } from "./socket";
 import aiRouter from "./routes/ai";
+import chatRouter from "./routes/chat";
 
 // 기존 라우터
 import authRouter from "./routes/auth";
@@ -64,6 +65,8 @@ app.use("/api/users", authRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/uploads", uploadRouter);
 app.use("/api/messages", messagesRouter);
+app.use("/api/chat", chatRouter);  // 추가
+
 
 (async () => {
   try {
