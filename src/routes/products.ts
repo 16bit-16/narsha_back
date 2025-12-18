@@ -127,16 +127,15 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   const startTime = Date.now();
   try {
-    // 필요한 필드만 선택
     const list = await Product.find()
-      .select("_id title price images location status seller likeCount createdAt")
+      .select("_id title price images location status seller likeCount createdAt category")  // category 추가
       .sort({ createdAt: -1 })
-      .limit(50); // 처음엔 50개만
+      .limit(50);
 
     return res.json({ ok: true, products: list });
   } catch (err: any) {
     const duration = Date.now() - startTime;
-    console.error(`❌ [GET /products] 에러 (${duration}ms):`, err.message);
+    console.error(`[GET /products] 에러 (${duration}ms):`, err.message);
     return res.status(500).json({ ok: false, error: err.message });
   }
 });
